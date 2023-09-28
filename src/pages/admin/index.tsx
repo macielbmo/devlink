@@ -2,7 +2,7 @@ import { FormEvent, useState, useEffect } from 'react'
 import { FiTrash } from 'react-icons/fi'
 
 import { db } from "../../services/firebaseConnection"
-import { addDoc, collection, onSnapshot, query, orderBy, doc, deleteDoc, Query } from 'firebase/firestore'
+import { addDoc, collection, onSnapshot, query, orderBy, doc, deleteDoc } from 'firebase/firestore'
 
 import Header from "../../components/Header";
 import Input from "../../components/input";
