@@ -1,17 +1,51 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useState, useEffect } from 'react'
 import { FiTrash } from 'react-icons/fi'
 
 import { db } from "../../services/firebaseConnection"
-import { addDoc, collection, onSnapshot, query, orderBy, doc, deleteDoc } from 'firebase/firestore'
+import { addDoc, collection, onSnapshot, query, orderBy, doc, deleteDoc, Query } from 'firebase/firestore'
 
 import Header from "../../components/Header";
 import Input from "../../components/input";
+
+interface LinkProps {
+  id: string,
+  name: string,
+  url: string,
+  bg: string,
+  color: string,
+}
 
 export default function Admin() {
   const [nameInput, setNameInput] = useState('')
   const [urlInput, setUrlInput] = useState('')
   const [bgColorInput, setBgColorInput] = useState('#f1f1f1')
   const [textColorInput, setTextColorInput] = useState('#121212')
+
+  const [links, setLinks] = useState<LinkProps[]>([])
+
+  useEffect(() => {
+    const linksRef = collection(db, "links")
+    const queryRef = query(linksRef, orderBy("created", "asc"))
+    
+    const unsub = onSnapshot(queryRef, (snapshot) => {
+      const list = [] as LinkProps[];
+
+      snapshot.forEach((doc) => {
+         list.push({
+          id: doc.id,
+          name: doc.data().name,
+          url: doc.data().url,
+          bg: doc.data().bg,
+          color: doc.data().color,
+         }) 
+      })
+
+      setLinks(list)
+    })
+    
+    return () => unsub();
+
+  }, [])
 
   async function hadleRegister(e: FormEvent) {
     e.preventDefault();
@@ -37,6 +71,11 @@ export default function Admin() {
       console.log("Erro ao cadastrar no banco! " + error)
     })
 
+  }
+
+  async function hadleDeletedLink(id: string) {
+    const docRef = doc(db, "links", id)
+    await deleteDoc(docRef)
   }
 
   return(
@@ -106,18 +145,22 @@ export default function Admin() {
       <section className='w-full flex flex-col items-center'>
         <h2 className='font-bold text-white mb-4 text-2xl'>Meus Links</h2>
 
-        <article 
-          className='flex items-center justify-between w-11/12 max-w-xl rounded py-3 px-2 mb-2 select-none'
-          style={{backgroundColor: "#2563EB", color: "#000"}}
+        {links.map( (link) => (
+          <article 
+            key={link.id}
+            className='flex items-center justify-between w-11/12 max-w-xl rounded py-3 px-2 mb-2 select-none'
+            style={{backgroundColor: `${link.bg}`, color: `${link.color}`}}
         >
-          <p className='font-medium'>Canal do YouTube</p>
+          <p className='font-medium'>{link.name}</p>
 
           <div className='flex justify-center'>
             <button 
+              onClick={() => hadleDeletedLink(link.id) }
               className='border border-dashed p-1 rounded bg-neutral-800'> 
               <FiTrash size={18} color='#FFF'/> </button>
           </div>
         </article>
+        ))}
       </section>
     </div>
   )
